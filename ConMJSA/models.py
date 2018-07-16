@@ -1,28 +1,24 @@
 from django.db import models
 import pandas as pd
 import numpy as np
-df_hor = pd.read_csv('realparsing.csv',sep=',')
-
-df_hor_c  = np.array(df_hor.columns)
-hor_db =[] 
-for x in range(len(df_hor_c)):
-   hor_db.append(df_hor_c[x])
-print(df_hor_c[x])
 
 class CMS(models.Model):
    class Meta:
-      db_table = 'cmssss' 
-   i=0   
-   for y in range(len(df_hor_c)):
-      try:
-      
-         '%s = models.CharField(max_length=20)'%df_hor_c[i]  
-      
-      except :
-         i +=1        
-         if (i == y):
-            break
-
+      db_table = 'leeu' 
+   
+   Study_id            =  models.CharField(max_length=200)
+   Run_id              =  models.CharField(max_length=200)
+   Assay_type          =  models.CharField(max_length=200)
+   Genotype            =  models.CharField(max_length=200)
+   Treatment           =  models.CharField(max_length=200) 
+   Dev                 =  models.CharField(max_length=200) 
+   Tissue              =  models.CharField(max_length=200) 
+   Layout              =  models.CharField(max_length=200)
+   Gene_id             =  models.CharField(max_length=200)
+   Tpm                 =  models.CharField(max_length=200)
+   Treatment_codenumber=  models.CharField(max_length=200)#id = models.AutoField(primary_key=True)
+   #SRP_SRR_A_G_T_S_T_L_GENE_TPM = models.CharField(max_length=200)
+   
  #'%s = models.CharField(db_column="%s",max_length=20)'%(' '.join(df_hor_c[y].split('.')),df_hor_c[y])
 
 

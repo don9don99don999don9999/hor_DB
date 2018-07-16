@@ -1,0 +1,226 @@
+
+<!DOCTYPE html>
+
+
+<style>
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.box {
+  font: 10px sans-serif;
+}
+
+.box line,
+.box rect,
+.box circle {
+  
+  stroke: #000;
+  stroke-width: 1px;
+}
+
+.box .center {
+  stroke-dasharray: 3,3;
+}
+
+.box .outlier {
+  fill: none;
+  stroke: #000;
+}
+
+.axis {
+  font: 12px sans-serif;
+}
+ 
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+ 
+.x.axis path { 
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+
+<script src="https://cdn.rawgit.com/mbostock/4061502/raw/88bf552c188c97c3357fe56b3fe3e43422881e0e/box.js"></script>
+<script>
+var labels = true; // show the text labels beside individual boxplots?
+
+var margin = {top: 30, right: 50, bottom: 100, left: 100};
+var  width = 800 - margin.left - margin.right;
+var height = 400 - margin.top - margin.bottom;
+    
+var min = Infinity,
+    max = -Infinity;
+    
+
+
+  d3.csv("/static/{{csvf}}", function(error, csv) {
+  if (error) throw error;
+
+  var data = [];
+
+  csv.forEach(function(x) {
+    var e = Math.floor(x.Expt - 1),
+        
+        s = Math.floor(x.genes),
+        d = data[e];
+    if (!d) d = data[e] = [s];
+    else d.push(s);
+    if (s > max) max = s;
+    if (s < min) min = s;
+  });
+  console.log(data[0])
+    var chart = d3.box()
+        .whiskers(iqr(1.5))
+        .height(height) 
+        .domain([min, max])
+        //.showLabels(labels);
+        
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .attr("class", "box")    
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    
+    // the x-axis
+    var x = d3.scale.ordinal()     
+        .domain( data.map(function(d) { console.log(d); return d[0] } ) )       
+        .rangeRoundBands([0 , width], 0.7, 0.3);        
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom")
+        .tickFormat(function(d,i) {if (data[i]== data[0]){return 'Con'}
+                            else if(data[i]==data[1]){return 'MeJA'}
+
+                           else{return 'SA'}} )
+        //.ticks(e.length)
+//function(d){if (data[0] ==d){return 'Con'}
+                            //else if(data[1] ==d){return 'MeJA'}
+                         //   else{return 'SA'}                          }
+    // the y-axis
+    var y = d3.scale.linear()
+        .domain([min, max])
+        .range([height + margin.top, 0 + margin.top]);
+    
+    var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+
+    // draw the boxplots    
+    svg.selectAll(".box")      
+      .data(data)
+      .enter().append("g")
+        .attr("transform", function(d) { return "translate(" +  x(d[0])  + "," + margin.top + ")"; } )
+      .call(chart.width(x.rangeBand()))
+      .attr('fill',function(d,i) {if (data[i]== data[0]){return 'black'}
+                            else if(data[i]==data[1]){return 'blue'}
+
+                           else{return 'red'}} )
+    
+          
+    // add a title
+    svg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 + (margin.top / 2))
+        .attr("text-anchor", "middle")  
+        .style("font-size", "18px") 
+        //.style("text-decoration", "underline")  
+        .text("{{query}}");
+    
+     // draw y axis
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+        .append("text") // and text1
+          .attr("transform", "rotate(-90)")
+          .attr('x',-140)
+          .attr("y", -40)
+          .attr("dy", ".71em")
+          .style("text-anchor", "end")
+          .style("font-size", "14px") 
+          .text("TPM");     
+
+//svg.selectAll('x axis')
+//  .data(data)
+//  .attr('x',function(d,i){return d.x})
+//  .attr('y',function(d,i){return d.y})
+    // draw x axis  
+    svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + (height  + margin.top + 10) + ")")
+      .call(xAxis)
+      .append("text")             // text label for the x axis
+        .attr("x", (width / 2) )
+        .attr("y",  30 )
+        .attr("dy", ".71em")
+        .style("text-anchor", "middle")
+        .style("font-size", "16px")
+        .text() 
+        //var gg=svg.selectAll("x axis")
+        //.data(data)
+        //.enter()
+        //.append('text')
+        //.attr('x',function(d){return d.x})
+        //.attr('y',function(d){return d.y})
+        //.text(function(d){if (data[0] ==d){return 'Con'}
+             //               else if(data[1] ==d){return 'MeJA'}
+               //             else{return 'SA'}})
+                
+
+    
+        //.text("AT1G01560"); 
+});
+
+// Returns a function to compute the interquartile range.
+function iqr(k) {
+  return function(d, i) {
+    var q1 = d.quartiles[0],
+        q3 = d.quartiles[2],
+        iqr = (q3 - q1) * k,
+        i = -1,
+        j = d.length;
+    while (d[++i] < q1 - iqr);
+    while (d[--j] > q3 + iqr);
+    return [i, j];
+  };
+}
+
+</script>
+</body>
+</head>
+
+
+
+<body>
+
+<div>
+ <h2> please enter gene names separated by comma  (ex. AT1G15610.3) </h2>
+ <form method=POST>
+ {% csrf_token %}
+ {{form}}
+ <input type="submit" value="Submit"/>
+ </form>
+ <h3>requested genes {{query}} </h3>
+</div>
+
+<div align="center" id="force"></div>
+
+
+
+
+
+</body>
+
+</html>
